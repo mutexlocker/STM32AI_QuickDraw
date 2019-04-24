@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    network.c
   * @author  AST Embedded Analytics Research Platform
-  * @date    Tue Apr 23 19:36:26 2019
+  * @date    Wed Apr 24 15:59:13 2019
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -46,14 +46,14 @@
 #define AI_NET_OBJ_INSTANCE g_network
  
 #undef AI_NETWORK_MODEL_SIGNATURE
-#define AI_NETWORK_MODEL_SIGNATURE     "72dbc727f1d66d72ef56edcd31b7205d"
+#define AI_NETWORK_MODEL_SIGNATURE     "4573d2ab9f7034d8957a754a9aee5b98"
 
 #ifndef AI_TOOLS_REVISION_ID
 #define AI_TOOLS_REVISION_ID     "(rev-)"
 #endif
 
 #undef AI_TOOLS_DATE_TIME
-#define AI_TOOLS_DATE_TIME   "Tue Apr 23 19:36:26 2019"
+#define AI_TOOLS_DATE_TIME   "Wed Apr 24 15:59:13 2019"
 
 #undef AI_TOOLS_COMPILE_TIME
 #define AI_TOOLS_COMPILE_TIME    __DATE__ " " __TIME__
@@ -154,11 +154,11 @@ AI_ARRAY_OBJ_DECLARE(
   AI_STATIC)
 AI_ARRAY_OBJ_DECLARE(
   dense_output_array, AI_DATA_FORMAT_FLOAT, 
-  NULL, NULL, 512,
+  NULL, NULL, 256,
   AI_STATIC)
 AI_ARRAY_OBJ_DECLARE(
   dense_nl_output_array, AI_DATA_FORMAT_FLOAT, 
-  NULL, NULL, 512,
+  NULL, NULL, 256,
   AI_STATIC)
 AI_ARRAY_OBJ_DECLARE(
   dense_1_output_array, AI_DATA_FORMAT_FLOAT, 
@@ -217,14 +217,14 @@ AI_TENSOR_OBJ_DECLARE(
   AI_STATIC)
 AI_TENSOR_OBJ_DECLARE(
   dense_output,
-  AI_SHAPE_INIT(1, 1, 512, 1),
-  AI_STRIDE_INIT(2048, 2048, 4, 4),
+  AI_SHAPE_INIT(1, 1, 256, 1),
+  AI_STRIDE_INIT(1024, 1024, 4, 4),
   &dense_output_array,
   AI_STATIC)
 AI_TENSOR_OBJ_DECLARE(
   dense_nl_output,
-  AI_SHAPE_INIT(1, 1, 512, 1),
-  AI_STRIDE_INIT(2048, 2048, 4, 4),
+  AI_SHAPE_INIT(1, 1, 256, 1),
+  AI_STRIDE_INIT(1024, 1024, 4, 4),
   &dense_nl_output_array,
   AI_STATIC)
 AI_TENSOR_OBJ_DECLARE(
@@ -471,27 +471,27 @@ AI_LAYER_OBJ_DECLARE(
 
 /* Weight tensor #1 */
 AI_ARRAY_OBJ_DECLARE(
-  dense_weights_array, AI_DATA_FORMAT_LUT8_FLOAT, 
-  NULL, NULL, 524288,
+  dense_weights_array, AI_DATA_FORMAT_FLOAT, 
+  NULL, NULL, 262144,
   AI_STATIC)
 
 AI_TENSOR_OBJ_DECLARE(
   dense_weights,
-  AI_SHAPE_INIT(1, 1, 512, 1024),
-  AI_STRIDE_INIT(524288, 524288, 1024, 1),
+  AI_SHAPE_INIT(1, 1, 256, 1024),
+  AI_STRIDE_INIT(1048576, 1048576, 4096, 4),
   &dense_weights_array,
   AI_STATIC)
 
 /* Weight tensor #2 */
 AI_ARRAY_OBJ_DECLARE(
   dense_bias_array, AI_DATA_FORMAT_FLOAT, 
-  NULL, NULL, 512,
+  NULL, NULL, 256,
   AI_STATIC)
 
 AI_TENSOR_OBJ_DECLARE(
   dense_bias,
-  AI_SHAPE_INIT(1, 1, 512, 1),
-  AI_STRIDE_INIT(2048, 2048, 4, 4),
+  AI_SHAPE_INIT(1, 1, 256, 1),
+  AI_STRIDE_INIT(1024, 1024, 4, 4),
   &dense_bias_array,
   AI_STATIC)
 
@@ -537,14 +537,14 @@ AI_LAYER_OBJ_DECLARE(
 
 /* Weight tensor #1 */
 AI_ARRAY_OBJ_DECLARE(
-  dense_1_weights_array, AI_DATA_FORMAT_LUT8_FLOAT, 
-  NULL, NULL, 65536,
+  dense_1_weights_array, AI_DATA_FORMAT_FLOAT, 
+  NULL, NULL, 32768,
   AI_STATIC)
 
 AI_TENSOR_OBJ_DECLARE(
   dense_1_weights,
-  AI_SHAPE_INIT(1, 1, 128, 512),
-  AI_STRIDE_INIT(65536, 65536, 512, 1),
+  AI_SHAPE_INIT(1, 1, 128, 256),
+  AI_STRIDE_INIT(131072, 131072, 1024, 4),
   &dense_1_weights_array,
   AI_STATIC)
 
@@ -668,7 +668,7 @@ AI_LAYER_OBJ_DECLARE(
 AI_NETWORK_OBJ_DECLARE(
   AI_NET_OBJ_INSTANCE,
   AI_BUFFER_OBJ_INIT(AI_BUFFER_FORMAT_U8,
-                     1, 1, 906000, 1,
+                     1, 1, 1492752, 1,
                      NULL),
   AI_BUFFER_OBJ_INIT(AI_BUFFER_FORMAT_U8,
                      1, 1, 105092, 1,
@@ -705,10 +705,10 @@ ai_bool network_configure_activations(
   dense_output_array.data_start = activations + 0;
   dense_nl_output_array.data = activations + 0;
   dense_nl_output_array.data_start = activations + 0;
-  dense_1_output_array.data = activations + 2048;
-  dense_1_output_array.data_start = activations + 2048;
-  dense_1_nl_output_array.data = activations + 2048;
-  dense_1_nl_output_array.data_start = activations + 2048;
+  dense_1_output_array.data = activations + 1024;
+  dense_1_output_array.data_start = activations + 1024;
+  dense_1_nl_output_array.data = activations + 1024;
+  dense_1_nl_output_array.data_start = activations + 1024;
   dense_2_output_array.data = activations + 0;
   dense_2_output_array.data_start = activations + 0;
   dense_2_nl_output_array.data = activations + 0;
@@ -755,22 +755,22 @@ ai_bool network_configure_weights(
   conv2d_3_bias_array.data_start = weights + 259712;
   dense_weights_array.format |= AI_FMT_FLAG_CONST;
   dense_weights_array.data = weights + 259968;
-  dense_weights_array.data_start = weights + 784256;
+  dense_weights_array.data_start = weights + 259968;
   dense_bias_array.format |= AI_FMT_FLAG_CONST;
-  dense_bias_array.data = weights + 785280;
-  dense_bias_array.data_start = weights + 785280;
+  dense_bias_array.data = weights + 1308544;
+  dense_bias_array.data_start = weights + 1308544;
   dense_1_weights_array.format |= AI_FMT_FLAG_CONST;
-  dense_1_weights_array.data = weights + 787328;
-  dense_1_weights_array.data_start = weights + 852864;
+  dense_1_weights_array.data = weights + 1309568;
+  dense_1_weights_array.data_start = weights + 1309568;
   dense_1_bias_array.format |= AI_FMT_FLAG_CONST;
-  dense_1_bias_array.data = weights + 853888;
-  dense_1_bias_array.data_start = weights + 853888;
+  dense_1_bias_array.data = weights + 1440640;
+  dense_1_bias_array.data_start = weights + 1440640;
   dense_2_weights_array.format |= AI_FMT_FLAG_CONST;
-  dense_2_weights_array.data = weights + 854400;
-  dense_2_weights_array.data_start = weights + 854400;
+  dense_2_weights_array.data = weights + 1441152;
+  dense_2_weights_array.data_start = weights + 1441152;
   dense_2_bias_array.format |= AI_FMT_FLAG_CONST;
-  dense_2_bias_array.data = weights + 905600;
-  dense_2_bias_array.data_start = weights + 905600;
+  dense_2_bias_array.data = weights + 1492352;
+  dense_2_bias_array.data_start = weights + 1492352;
   
   }
 
@@ -806,7 +806,7 @@ ai_bool ai_network_get_info(
       .api_version            = ai_platform_api_get_version(),
       .interface_api_version  = ai_platform_interface_api_get_version(),
       
-      .n_macc            = 10383644,
+      .n_macc            = 10088476,
       .n_inputs          = AI_NETWORK_IN_NUM,
       .inputs            = AI_BUFFER_OBJ_INIT(
                               AI_BUFFER_FORMAT_FLOAT,

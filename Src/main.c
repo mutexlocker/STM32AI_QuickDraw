@@ -57,6 +57,7 @@ typedef struct{
 	ai_float prob;
 	char* class;
 }id_prob;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -118,6 +119,33 @@ void Reset_Pred();
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+int cmp_ptr(const void *a, const void *b)
+{
+    const int **left  = (const float **)a;
+    const int **right = (const float **)b;
+
+    return (**left < **right) - (**right < **left);
+}
+
+size_t * order_int(const float *a, size_t n)
+{
+    const float **pointers = malloc(n * sizeof(const float *));
+
+    for (size_t i = 0; i < n; i++) pointers[i] = a + i;
+
+    qsort(pointers, n, sizeof(const float *), cmp_ptr);
+
+    size_t *indices = malloc(n * sizeof(size_t));
+
+    for (size_t i = 0; i < n; i++) indices[i] = pointers[i] - a;
+
+    free(pointers);
+
+    return indices;
+}
+
+
+
 void Reset_Pred(ai_float** in_data, id_prob* first_guess, id_prob* second_guess){
 	memset(in_data, 0.0, sizeof(in_data[0][0]) * INPUT_IMAGE_WIDTH * INPUT_IMAGE_HEIGHT);
 	second_guess->class = '-';
@@ -158,8 +186,8 @@ void Draw_Menu(){
   BSP_LCD_Clear(LCD_COLOR_WHITE);
   BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
   BSP_LCD_SetFont(&Font12);
-  BSP_LCD_DisplayStringAt(0,250,(uint8_t*) "1st Guess:", LEFT_MODE);
-  BSP_LCD_DisplayStringAt(0,270,(uint8_t*) "2st Guess:", LEFT_MODE);
+  BSP_LCD_DisplayStringAt(0,245,(uint8_t*) "I SEE:", CENTER_MODE);
+  //BSP_LCD_DisplayStringAt(0,270,(uint8_t*) "2st Guess:", LEFT_MODE);
   BSP_LCD_DrawRect(210,240,28,28);
   BSP_LCD_SetTextColor(LCD_COLOR_LIGHTCYAN);
   BSP_LCD_FillRect(175,290,65,50);
@@ -243,10 +271,10 @@ int main(void)
   second_guess.prob = 0.0;
   third_guess.prob = 0.0;
   fourth_guess.prob = 0.0;
-  char first_guess_str[16];
-  char second_guess_str[16];
-  char third_guess_str[16];
-  char fourth_guess_str[16];
+  char first_guess_str[30];
+  char second_guess_str[30];
+  char third_guess_str[30];
+  char fourth_guess_str[30];
   ai_float out_data[NUM_CLASSES];
   bool is_pressed = 0;
   bool tempx;
@@ -263,15 +291,6 @@ int main(void)
 	  		  if((screen_state.X > DRAW_IMGAE_X1 && screen_state.X < DRAW_IMGAE_X2) && (screen_state.Y > DRAW_IMGAE_Y1 && screen_state.Y < DRAW_IMGAE_Y2 )){
 		  		  int x =screen_state.Y*((float)28/240);
 		  		  int y = screen_state.X*((float)28/240);
-		  		  //printf("in data at X= %d Y =%d state x=%d y=%d\r\n", x , y , screen_state.X, screen_state.Y);
-//		  		  in_data[x+1][y+1] = 0.97;
-//		  		  in_data[x-1][y-1] = 0.97;
-//		  		  in_data[x+1][y] = 0.97;
-//		  		  in_data[x-1][y] = 0.97;
-//		  		  in_data[x][y+1] = 0.97;
-//		  		  in_data[x][y-1] = 0.97;
-//		  		  in_data[x+1][y-1] = 0.97;
-//		  		  in_data[x-1][y+1] = 0.97;
 		  		  in_data[x][y] = 0.97;
 //		  		  BSP_LCD_DrawPixel(y+1 + LCD_INPUT_IMAGE_SHIFT,LCD_INPUT_IMAGE_HEIGHT+x+1,255);
 //		  		  BSP_LCD_DrawPixel(y-1 + LCD_INPUT_IMAGE_SHIFT,LCD_INPUT_IMAGE_HEIGHT+x-1,255);
@@ -282,7 +301,7 @@ int main(void)
 //		  		  BSP_LCD_DrawPixel(y + LCD_INPUT_IMAGE_SHIFT, LCD_INPUT_IMAGE_HEIGHT+x-1,255);
 //		  		  BSP_LCD_DrawPixel(y + 1 + LCD_INPUT_IMAGE_SHIFT,LCD_INPUT_IMAGE_HEIGHT+x-1,255);
 //		  		  BSP_LCD_DrawPixel(y - 1 + LCD_INPUT_IMAGE_SHIFT,LCD_INPUT_IMAGE_HEIGHT+x+1,255);
-		  		  BSP_LCD_FillCircle(screen_state.X, screen_state.Y, 4);
+		  		  BSP_LCD_FillCircle(screen_state.X, screen_state.Y, 3);
 	  		  }
 	  		  else if ((screen_state.X > CLEAR_BUTTON_X1 && screen_state.X < CLEAR_BUTTON_X2) && (screen_state.Y > CLEAR_BUTTON_Y1 && screen_state.Y < CLEAR_BUTTON_Y2 ) ){
 	  			Draw_Menu();
@@ -294,7 +313,7 @@ int main(void)
 
 	  	  }
 
-	  	  HAL_Delay(1);
+
     /* USER CODE END WHILE */
 
   //MX_X_CUBE_AI_Process();
@@ -308,7 +327,7 @@ int main(void)
 //			}
 //			printf("\n\r");
 //		}
-		HAL_Delay(100);
+		HAL_Delay(1);
 		MX_X_CUBE_AI_Process(in_data,out_data,1);
 		for(int i = 0; i < NUM_CLASSES; ++i){
 			printf("class %d  = %f\n\r",i, out_data[i]);
@@ -328,11 +347,15 @@ int main(void)
 		//time = HAL_GetTick() - time;
 		//printf("FINAL %s %f\n\r", first_guess.class , first_guess.prob);
 		//printf("FINAL %s%f\n\r", second_guess.class, second_guess.prob);
-		sprintf(first_guess_str ,"%s (%.2f)", first_guess.class , first_guess.prob);
-		sprintf(second_guess_str,"%s (%.2f)", second_guess.class , second_guess.prob);
+	    size_t N = sizeof(out_data) / sizeof(*out_data);
+	    size_t *indices = order_int(out_data, N);
+	    //for (size_t i = 0; i < N; i++) printf("%f \n\r", out_data[indices[i]]);
+		sprintf(first_guess_str ,"%s , %s", dict[indices[0]] , dict[indices[1]]);
+		sprintf(second_guess_str,"%s , %s , %s", dict[indices[2]] , dict[indices[3]],dict[indices[4]]);
 		BSP_LCD_SetFont(&Font12);
-		BSP_LCD_DisplayStringAt(70,250,(uint8_t*) first_guess_str, LEFT_MODE);
-		BSP_LCD_DisplayStringAt(70,270,(uint8_t*) second_guess_str, LEFT_MODE);
+		BSP_LCD_DisplayStringAt(10,270,(uint8_t*) first_guess_str, LEFT_MODE);
+		BSP_LCD_DisplayStringAt(10,280,(uint8_t*) second_guess_str, LEFT_MODE);
+	    free(indices);
 		Reset_Pred(&in_data,&first_guess,&second_guess);
 
 	 }

@@ -12,8 +12,8 @@
 <targetDefinitions>
   <board id="32f429idiscovery">
     <name>32F429IDISCOVERY</name>
-    <dbgIF>JTAG</dbgIF>
     <dbgIF>SWD</dbgIF>
+    <dbgIF>JTAG</dbgIF>
     <mcuId>stm32f429zitx</mcuId>
   </board>
 </targetDefinitions>
