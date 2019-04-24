@@ -31,6 +31,7 @@
 #include <string.h>
 
 
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,7 +43,7 @@
 #define INPUT_IMAGE_HEIGHT 						28
 #define LCD_INPUT_IMAGE_WIDTH					240
 #define LCD_INPUT_IMAGE_HEIGHT 					240
-#define NUM_CLASSES								50
+#define NUM_CLASSES								100
 #define LCD_INPUT_IMAGE_SHIFT					210
 #define DRAW_IMGAE_X1							0  +10
 #define DRAW_IMGAE_X2							240-10
@@ -54,7 +55,7 @@
 #define CLEAR_BUTTON_Y2							CLEAR_BUTTON_Y1 + 50
 typedef struct{
 	ai_float prob;
-	ai_u8 id;
+	char* class;
 }id_prob;
 /* USER CODE END PTD */
 
@@ -85,6 +86,16 @@ SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN PV */
 TS_StateTypeDef screen_state;
+const char *dict[] = { "snake", "syringe", "television", "octagon", "diamond", "line", "square", "knife", "campfire",
+					   "ear", "lantern", "jail", "airplane", "guitar", "bicycle", "star", "suitcase", "crab", "steak",
+					   "cloud", "whale", "zigzag", "donut", "hat", "lighter", "bridge", "truck", "broccoli", "fork",
+					   "swan", "leaf", "vase", "cookie", "tree", "sweater", "tent", "bird", "teapot", "dolphin", "chair",
+					   "squirrel", "stitches", "hexagon", "foot", "pillow", "key", "banana", "tooth", "door", "boomerang",
+					   "sun", "stop sign", "leg", "t-shirt", "microwave", "spider", "belt", "umbrella", "bed", "butterfly",
+					   "toilet", "stairs", "oven", "motorbike", "onion", "violin", "cat", "fish", "bee", "nose", "apple",
+					   "clock", "toe", "lightning", "dog", "arm", "compass", "stove", "brain", "lollipop", "skull",
+					   "triangle", "camera", "finger", "snail", "radio", "axe", "scissors", "cake", "basket", "helmet",
+					   "tiger", "sock", "swing set", "flower", "circle", "sink", "spoon", "purse", "mountain"};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -109,9 +120,9 @@ void Reset_Pred();
 /* USER CODE BEGIN 0 */
 void Reset_Pred(ai_float** in_data, id_prob* first_guess, id_prob* second_guess){
 	memset(in_data, 0.0, sizeof(in_data[0][0]) * INPUT_IMAGE_WIDTH * INPUT_IMAGE_HEIGHT);
-	second_guess->id = 0;
+	second_guess->class = '-';
 	second_guess->prob = 0.0;
-	first_guess->id = 0;
+	first_guess->class = '-';
 	first_guess->prob = 0.0;
 
 }
@@ -147,8 +158,8 @@ void Draw_Menu(){
   BSP_LCD_Clear(LCD_COLOR_WHITE);
   BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
   BSP_LCD_SetFont(&Font12);
-  BSP_LCD_DisplayStringAt(0,250,(uint8_t*) "First  Guess:", LEFT_MODE);
-  BSP_LCD_DisplayStringAt(0,270,(uint8_t*) "Second Guess:", LEFT_MODE);
+  BSP_LCD_DisplayStringAt(0,250,(uint8_t*) "1st Guess:", LEFT_MODE);
+  BSP_LCD_DisplayStringAt(0,270,(uint8_t*) "2st Guess:", LEFT_MODE);
   BSP_LCD_DrawRect(210,240,28,28);
   BSP_LCD_SetTextColor(LCD_COLOR_LIGHTCYAN);
   BSP_LCD_FillRect(175,290,65,50);
@@ -226,11 +237,20 @@ int main(void)
   ai_float in_data[28][28]= {{0}};
   id_prob first_guess;
   id_prob second_guess;
+  id_prob third_guess;
+  id_prob fourth_guess;
   first_guess.prob = 0.0;
   second_guess.prob = 0.0;
-  char first_guess_str[12];
-  char second_guess_str[12];
+  third_guess.prob = 0.0;
+  fourth_guess.prob = 0.0;
+  char first_guess_str[16];
+  char second_guess_str[16];
+  char third_guess_str[16];
+  char fourth_guess_str[16];
   ai_float out_data[NUM_CLASSES];
+  bool is_pressed = 0;
+  bool tempx;
+  bool tempy;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -262,7 +282,7 @@ int main(void)
 //		  		  BSP_LCD_DrawPixel(y + LCD_INPUT_IMAGE_SHIFT, LCD_INPUT_IMAGE_HEIGHT+x-1,255);
 //		  		  BSP_LCD_DrawPixel(y + 1 + LCD_INPUT_IMAGE_SHIFT,LCD_INPUT_IMAGE_HEIGHT+x-1,255);
 //		  		  BSP_LCD_DrawPixel(y - 1 + LCD_INPUT_IMAGE_SHIFT,LCD_INPUT_IMAGE_HEIGHT+x+1,255);
-		  		  BSP_LCD_FillCircle(screen_state.X, screen_state.Y, 2);
+		  		  BSP_LCD_FillCircle(screen_state.X, screen_state.Y, 4);
 	  		  }
 	  		  else if ((screen_state.X > CLEAR_BUTTON_X1 && screen_state.X < CLEAR_BUTTON_X2) && (screen_state.Y > CLEAR_BUTTON_Y1 && screen_state.Y < CLEAR_BUTTON_Y2 ) ){
 	  			Draw_Menu();
@@ -292,27 +312,27 @@ int main(void)
 		MX_X_CUBE_AI_Process(in_data,out_data,1);
 		for(int i = 0; i < NUM_CLASSES; ++i){
 			printf("class %d  = %f\n\r",i, out_data[i]);
-//			if(first_guess.prob < out_data[i]){
-//				second_guess.id = first_guess.id;
-//				second_guess.prob = first_guess.prob;
-//				first_guess.prob = out_data[i];
-//				first_guess.id = i;
-//				printf("-%d %f\n\r", first_guess.id , first_guess.prob);
-//				printf("-%d %f\n\r", second_guess.id, second_guess.prob);
-//			}
-//			else if(second_guess.prob < out_data[i]){
-//				second_guess.id = i;
-//				second_guess.prob = out_data[i];
-//			}
+			if(first_guess.prob < out_data[i]){
+				second_guess.class = first_guess.class;
+				second_guess.prob = first_guess.prob;
+				first_guess.prob = out_data[i];
+				first_guess.class = dict[i];
+				//printf("-%c %f\n\r", first_guess.class , first_guess.prob);
+				//printf("-%c %f\n\r", second_guess.class, second_guess.prob);
+			}
+			else if(second_guess.prob < out_data[i]){
+				second_guess.class = dict[i];
+				second_guess.prob = out_data[i];
+			}
 		}
 		//time = HAL_GetTick() - time;
-		printf("FINAL %d %f\n\r", first_guess.id , first_guess.prob);
-		printf("FINAL %d %f\n\r", second_guess.id, second_guess.prob);
-		sprintf(first_guess_str ,"%d (%.4f)", first_guess.id , first_guess.prob);
-		sprintf(second_guess_str,"%d (%.4f)", second_guess.id , second_guess.prob);
+		//printf("FINAL %s %f\n\r", first_guess.class , first_guess.prob);
+		//printf("FINAL %s%f\n\r", second_guess.class, second_guess.prob);
+		sprintf(first_guess_str ,"%s (%.2f)", first_guess.class , first_guess.prob);
+		sprintf(second_guess_str,"%s (%.2f)", second_guess.class , second_guess.prob);
 		BSP_LCD_SetFont(&Font12);
-		BSP_LCD_DisplayStringAt(100,250,(uint8_t*) first_guess_str, LEFT_MODE);
-		BSP_LCD_DisplayStringAt(100,270,(uint8_t*) second_guess_str, LEFT_MODE);
+		BSP_LCD_DisplayStringAt(70,250,(uint8_t*) first_guess_str, LEFT_MODE);
+		BSP_LCD_DisplayStringAt(70,270,(uint8_t*) second_guess_str, LEFT_MODE);
 		Reset_Pred(&in_data,&first_guess,&second_guess);
 
 	 }
