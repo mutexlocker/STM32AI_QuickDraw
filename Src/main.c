@@ -53,6 +53,7 @@
 #define CLEAR_BUTTON_Y1							290
 #define CLEAR_BUTTON_X2						    CLEAR_BUTTON_X1 + 64
 #define CLEAR_BUTTON_Y2							CLEAR_BUTTON_Y1 + 50
+#define GAME_TIMER_TIME							6
 typedef struct{
 	ai_float prob;
 	char* class;
@@ -80,6 +81,8 @@ I2C_HandleTypeDef hi2c3;
 LTDC_HandleTypeDef hltdc;
 
 SPI_HandleTypeDef hspi5;
+
+TIM_HandleTypeDef htim6;
 
 UART_HandleTypeDef huart1;
 
@@ -109,6 +112,8 @@ void MX_USART1_UART_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_SPI5_Init(void);
 static void MX_CRC_Init(void);
+static void MX_GFXSIMULATOR_Init(void);
+static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 static void Lcd_Init();
 static void Touch_init();
@@ -119,6 +124,15 @@ void Reset_Pred();
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+
+	if(htim->Instance==TIM6){
+		BSP_LED_Toggle(LED3);
+	}
+}
+
+
 int cmp_ptr(const void *a, const void *b)
 {
     const int **left  = (const float **)a;
@@ -259,18 +273,16 @@ int main(void)
 //  MX_SPI5_Init();
   MX_CRC_Init();
   MX_X_CUBE_AI_Init();
+  //MX_GFXSIMULATOR_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   Touch_init();
   /* initialize input/output buffer handlers */
   ai_float in_data[28][28]= {{0}};
   id_prob first_guess;
   id_prob second_guess;
-  id_prob third_guess;
-  id_prob fourth_guess;
   first_guess.prob = 0.0;
   second_guess.prob = 0.0;
-  third_guess.prob = 0.0;
-  fourth_guess.prob = 0.0;
   char first_guess_str[30];
   char second_guess_str[30];
   char third_guess_str[30];
@@ -279,6 +291,9 @@ int main(void)
   bool is_pressed = 0;
   bool tempx;
   bool tempy;
+  BSP_LED_Init(LED3);
+  HAL_TIM_Base_Start_IT(&htim6);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -485,6 +500,27 @@ static void MX_DMA2D_Init(void)
 }
 
 /**
+  * @brief GFXSIMULATOR Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GFXSIMULATOR_Init(void)
+{
+
+  /* USER CODE BEGIN GFXSIMULATOR_Init 0 */
+
+  /* USER CODE END GFXSIMULATOR_Init 0 */
+
+  /* USER CODE BEGIN GFXSIMULATOR_Init 1 */
+
+  /* USER CODE END GFXSIMULATOR_Init 1 */
+  /* USER CODE BEGIN GFXSIMULATOR_Init 2 */
+
+  /* USER CODE END GFXSIMULATOR_Init 2 */
+
+}
+
+/**
   * @brief I2C3 Initialization Function
   * @param None
   * @retval None
@@ -647,6 +683,44 @@ static void MX_SPI5_Init(void)
   /* USER CODE BEGIN SPI5_Init 2 */
 
   /* USER CODE END SPI5_Init 2 */
+
+}
+
+/**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 40000;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 2000;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
 
 }
 

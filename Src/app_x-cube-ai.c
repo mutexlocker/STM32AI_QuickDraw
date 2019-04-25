@@ -54,10 +54,6 @@
 #include "app_x-cube-ai.h"
 #include "bsp_ai.h"
 #include "ai_datatypes_defines.h"
-
-/*************************************************************************
-  *
-  */
 #include <string.h>
 #include <stdio.h>
 static ai_handle network = AI_HANDLE_NULL;
@@ -65,6 +61,10 @@ static ai_buffer ai_input[AI_NETWORK_IN_NUM] = { AI_NETWORK_IN_1 };
 static ai_buffer ai_output[AI_NETWORK_OUT_NUM] = { AI_NETWORK_OUT_1 };
 AI_ALIGNED(4)
 static ai_u8 activations[AI_NETWORK_DATA_ACTIVATIONS_SIZE];
+
+/*************************************************************************
+  *
+  */
 void MX_X_CUBE_AI_Init(void)
 {
     MX_UARTx_Init();

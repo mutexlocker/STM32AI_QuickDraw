@@ -57,6 +57,9 @@ void MX_X_CUBE_AI_Init(void);
 void MX_X_CUBE_AI_Process(const ai_float *in_data, ai_float *out_data,const ai_u16 batch_size);
 
 /* Multiple network support --------------------------------------------------*/
+
+
+
 typedef struct {
     const char *name;
     ai_network_params params;
