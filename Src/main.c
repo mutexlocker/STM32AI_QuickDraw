@@ -138,29 +138,28 @@ void Reset_Pred();
 /* USER CODE BEGIN 0 */
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-
 	if(htim->Instance==TIM6){
 		if(is_random_page){
-			counter++;
+			counter--;
 			char c[1];
 			sprintf(c, "%d", counter);
 			BSP_LCD_SetFont(&Font24);
 			BSP_LCD_DisplayStringAt(0,220,(uint8_t*) c, CENTER_MODE);
-			if(counter == GAME_RANDOM_TIME ){
-				counter = 0;
+			if(counter == 0 ){
+				counter = GAME_TIMER_TIME;
 				is_random_page = false;
 				is_game_page = true;
 				Draw_Menu();
 			}
 		}
 		else if(is_game_page){
-				counter++;
+				counter--;
 				char c[1];
 				sprintf(c, "%d", counter);
 				BSP_LCD_SetFont(&Font24);
 				BSP_LCD_SetBackColor(LCD_COLOR_RED);
 				BSP_LCD_DisplayStringAt(0,300,(uint8_t*) c, LEFT_MODE);
-				if(counter == GAME_TIMER_TIME){
+				if(counter == 0){
 					counter = 0;
 					is_game_page = false;
 					is_score_page = true;
@@ -356,13 +355,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   //Draw_Menu();
   Draw_First_Page();
-  while (1)
-  {
+  while (1){
 
 	      BSP_TS_GetState(&screen_state);
 
 	  	  if(screen_state.TouchDetected){
 	  	  if((screen_state.X > START_BUTTON_X1 && screen_state.X < START_BUTTON_X2) && (screen_state.Y > START_BUTTON_Y1 && screen_state.Y < START_BUTTON_Y2 ) && is_main_menu){
+	  		  counter = GAME_RANDOM_TIME;
 	  		  is_main_menu = false;
 	  		  time_t t;
 	  		  srand((unsigned) HAL_GetTick());
