@@ -114,6 +114,7 @@ static void MX_SPI5_Init(void);
 static void MX_CRC_Init(void);
 static void MX_GFXSIMULATOR_Init(void);
 static void MX_TIM6_Init(void);
+void Draw_First_Page(void);
 /* USER CODE BEGIN PFP */
 static void Lcd_Init();
 static void Touch_init();
@@ -195,6 +196,18 @@ void Print_Image(ai_float *image[INPUT_IMAGE_WIDTH][INPUT_IMAGE_HEIGHT][1]){
 		printf("\r\n");
 	}
 }
+
+void Draw_First_Page(){
+  BSP_LCD_Clear(LCD_COLOR_ORANGE);
+  BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+  BSP_LCD_SetFont(&Font20);
+  BSP_LCD_DisplayStringAt(0,128,(uint8_t*) "Quick , Draw!", CENTER_MODE);
+  BSP_LCD_SetFont(&Font16);
+  BSP_LCD_SetBackColor(LCD_COLOR_ORANGE);
+  BSP_LCD_DrawRect(80,171,70,30);
+  BSP_LCD_DisplayStringAt(0,180,(uint8_t*) "START", CENTER_MODE);
+}
+
 
 void Draw_Menu(){
   BSP_LCD_Clear(LCD_COLOR_WHITE);
@@ -281,6 +294,7 @@ int main(void)
   ai_float in_data[28][28]= {{0}};
   id_prob first_guess;
   id_prob second_guess;
+  bool is_main_menu = 1;
   first_guess.prob = 0.0;
   second_guess.prob = 0.0;
   char first_guess_str[30];
@@ -298,9 +312,11 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  Draw_Menu();
+  //Draw_Menu();
+  Draw_First_Page();
   while (1)
   {
+
 	      BSP_TS_GetState(&screen_state);
 	  	  if(screen_state.TouchDetected){
 	  		  if((screen_state.X > DRAW_IMGAE_X1 && screen_state.X < DRAW_IMGAE_X2) && (screen_state.Y > DRAW_IMGAE_Y1 && screen_state.Y < DRAW_IMGAE_Y2 )){
