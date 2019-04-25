@@ -29,9 +29,8 @@
 #include <sys/unistd.h> /* STDOUT_FILENO, STDERR_FILENO */
 #endif
 #include <string.h>
-
-
-
+#include <stdlib.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,7 +52,12 @@
 #define CLEAR_BUTTON_Y1							290
 #define CLEAR_BUTTON_X2						    CLEAR_BUTTON_X1 + 64
 #define CLEAR_BUTTON_Y2							CLEAR_BUTTON_Y1 + 50
-#define GAME_TIMER_TIME							6
+#define GAME_TIMER_TIME							10
+#define GAME_RANDOM_TIME						5
+#define START_BUTTON_X1							80
+#define START_BUTTON_X2							171
+#define START_BUTTON_Y1							150
+#define START_BUTTON_Y2							210
 typedef struct{
 	ai_float prob;
 	char* class;
@@ -89,6 +93,12 @@ UART_HandleTypeDef huart1;
 SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN PV */
+bool is_main_menu = true;
+bool is_random_page = false;
+bool is_game_page = false;
+bool is_score_page = false;
+uint8_t counter = 0;
+bool game_over = false;
 TS_StateTypeDef screen_state;
 const char *dict[] = { "snake", "syringe", "television", "octagon", "diamond", "line", "square", "knife", "campfire",
 					   "ear", "lantern", "jail", "airplane", "guitar", "bicycle", "star", "suitcase", "crab", "steak",
@@ -115,6 +125,7 @@ static void MX_CRC_Init(void);
 static void MX_GFXSIMULATOR_Init(void);
 static void MX_TIM6_Init(void);
 void Draw_First_Page(void);
+void Draw_Random_Page(const char* str);
 /* USER CODE BEGIN PFP */
 static void Lcd_Init();
 static void Touch_init();
@@ -129,6 +140,32 @@ void Reset_Pred();
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 	if(htim->Instance==TIM6){
+		if(is_random_page){
+			counter++;
+			char c[1];
+			sprintf(c, "%d", counter);
+			BSP_LCD_SetFont(&Font24);
+			BSP_LCD_DisplayStringAt(0,220,(uint8_t*) c, CENTER_MODE);
+			if(counter == GAME_RANDOM_TIME ){
+				counter = 0;
+				is_random_page = false;
+				is_game_page = true;
+				Draw_Menu();
+			}
+		}
+		else if(is_game_page){
+				counter++;
+				char c[1];
+				sprintf(c, "%d", counter);
+				BSP_LCD_SetFont(&Font24);
+				BSP_LCD_SetBackColor(LCD_COLOR_RED);
+				BSP_LCD_DisplayStringAt(0,300,(uint8_t*) c, LEFT_MODE);
+				if(counter == GAME_TIMER_TIME){
+					counter = 0;
+					is_game_page = false;
+					is_score_page = true;
+			}
+		}
 		BSP_LED_Toggle(LED3);
 	}
 }
@@ -208,9 +245,20 @@ void Draw_First_Page(){
   BSP_LCD_DisplayStringAt(0,180,(uint8_t*) "START", CENTER_MODE);
 }
 
+void Draw_Random_Page(const char* str){
+  BSP_LCD_Clear(LCD_COLOR_ORANGE);
+  BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+  BSP_LCD_SetFont(&Font24);
+  BSP_LCD_DisplayStringAt(0,128,(uint8_t*) "Draw", CENTER_MODE);
+  BSP_LCD_SetFont(&Font20);
+  BSP_LCD_SetBackColor(LCD_COLOR_ORANGE);
+  BSP_LCD_DisplayStringAt(0,180,(uint8_t*) str, CENTER_MODE);
+}
+
 
 void Draw_Menu(){
   BSP_LCD_Clear(LCD_COLOR_WHITE);
+  BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
   BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
   BSP_LCD_SetFont(&Font12);
   BSP_LCD_DisplayStringAt(0,245,(uint8_t*) "I SEE:", CENTER_MODE);
@@ -294,17 +342,11 @@ int main(void)
   ai_float in_data[28][28]= {{0}};
   id_prob first_guess;
   id_prob second_guess;
-  bool is_main_menu = 1;
   first_guess.prob = 0.0;
   second_guess.prob = 0.0;
   char first_guess_str[30];
   char second_guess_str[30];
-  char third_guess_str[30];
-  char fourth_guess_str[30];
   ai_float out_data[NUM_CLASSES];
-  bool is_pressed = 0;
-  bool tempx;
-  bool tempy;
   BSP_LED_Init(LED3);
   HAL_TIM_Base_Start_IT(&htim6);
 
@@ -318,8 +360,17 @@ int main(void)
   {
 
 	      BSP_TS_GetState(&screen_state);
+
 	  	  if(screen_state.TouchDetected){
-	  		  if((screen_state.X > DRAW_IMGAE_X1 && screen_state.X < DRAW_IMGAE_X2) && (screen_state.Y > DRAW_IMGAE_Y1 && screen_state.Y < DRAW_IMGAE_Y2 )){
+	  	  if((screen_state.X > START_BUTTON_X1 && screen_state.X < START_BUTTON_X2) && (screen_state.Y > START_BUTTON_Y1 && screen_state.Y < START_BUTTON_Y2 ) && is_main_menu){
+	  		  is_main_menu = false;
+	  		  time_t t;
+	  		  srand((unsigned) HAL_GetTick());
+	  		  int random_n = rand() % 100;
+	  		  Draw_Random_Page(dict[random_n]);
+	  		  is_random_page = true;
+	  	  }
+	  	  else if((screen_state.X > DRAW_IMGAE_X1 && screen_state.X < DRAW_IMGAE_X2) && (screen_state.Y > DRAW_IMGAE_Y1 && screen_state.Y < DRAW_IMGAE_Y2 ) && is_game_page){
 		  		  int x =screen_state.Y*((float)28/240);
 		  		  int y = screen_state.X*((float)28/240);
 		  		  in_data[x][y] = 0.97;
@@ -342,6 +393,22 @@ int main(void)
 	  		  }
 
 
+	  	  }
+	  	  if(is_score_page){
+	  		HAL_Delay(100);
+	  		MX_X_CUBE_AI_Process(in_data,out_data,1);
+		    size_t N = sizeof(out_data) / sizeof(*out_data);
+		    size_t *indices = order_int(out_data, N);
+		    //for (size_t i = 0; i < N; i++) printf("%f \n\r", out_data[indices[i]]);
+			sprintf(first_guess_str ,"%s , %s", dict[indices[0]] , dict[indices[1]]);
+			sprintf(second_guess_str,"%s , %s , %s", dict[indices[2]] , dict[indices[3]],dict[indices[4]]);
+			BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+			BSP_LCD_SetFont(&Font12);
+			BSP_LCD_DisplayStringAt(10,270,(uint8_t*) first_guess_str, LEFT_MODE);
+			BSP_LCD_DisplayStringAt(10,280,(uint8_t*) second_guess_str, LEFT_MODE);
+		    free(indices);
+			Reset_Pred(&in_data,&first_guess,&second_guess);
+			is_score_page = false;
 	  	  }
 
 
@@ -383,6 +450,7 @@ int main(void)
 	    //for (size_t i = 0; i < N; i++) printf("%f \n\r", out_data[indices[i]]);
 		sprintf(first_guess_str ,"%s , %s", dict[indices[0]] , dict[indices[1]]);
 		sprintf(second_guess_str,"%s , %s , %s", dict[indices[2]] , dict[indices[3]],dict[indices[4]]);
+		BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
 		BSP_LCD_SetFont(&Font12);
 		BSP_LCD_DisplayStringAt(10,270,(uint8_t*) first_guess_str, LEFT_MODE);
 		BSP_LCD_DisplayStringAt(10,280,(uint8_t*) second_guess_str, LEFT_MODE);
@@ -722,7 +790,7 @@ static void MX_TIM6_Init(void)
   htim6.Instance = TIM6;
   htim6.Init.Prescaler = 40000;
   htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim6.Init.Period = 2000;
+  htim6.Init.Period = 2500;
   htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
   {
