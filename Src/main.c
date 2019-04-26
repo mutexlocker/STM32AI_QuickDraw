@@ -52,12 +52,13 @@
 #define CLEAR_BUTTON_Y1							290
 #define CLEAR_BUTTON_X2						    CLEAR_BUTTON_X1 + 64
 #define CLEAR_BUTTON_Y2							CLEAR_BUTTON_Y1 + 50
-#define GAME_TIMER_TIME							10
+#define GAME_TIMER_TIME							20
 #define GAME_RANDOM_TIME						5
 #define START_BUTTON_X1							80
 #define START_BUTTON_X2							171
 #define START_BUTTON_Y1							150
 #define START_BUTTON_Y2							210
+#define MAX_CLASS_CONSIDER						6
 typedef struct{
 	ai_float prob;
 	char* class;
@@ -97,6 +98,7 @@ bool is_main_menu = true;
 bool is_random_page = false;
 bool is_game_page = false;
 bool is_score_page = false;
+uint8_t current_doodle;
 uint8_t counter = 0;
 bool game_over = false;
 TS_StateTypeDef screen_state;
@@ -126,6 +128,7 @@ static void MX_GFXSIMULATOR_Init(void);
 static void MX_TIM6_Init(void);
 void Draw_First_Page(void);
 void Draw_Random_Page(const char* str);
+void Draw_Results_Page(const bool res,const char *str);
 /* USER CODE BEGIN PFP */
 static void Lcd_Init();
 static void Touch_init();
@@ -242,6 +245,27 @@ void Draw_First_Page(){
   BSP_LCD_SetBackColor(LCD_COLOR_ORANGE);
   BSP_LCD_DrawRect(80,171,70,30);
   BSP_LCD_DisplayStringAt(0,180,(uint8_t*) "START", CENTER_MODE);
+}
+
+
+void Draw_Results_Page(const bool res,const char *str){
+  if(!res){
+	BSP_LCD_Clear(LCD_COLOR_RED);
+	BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+	BSP_LCD_SetFont(&Font20);
+	BSP_LCD_DisplayStringAt(0,128,(uint8_t*) "Sorry!", CENTER_MODE);
+	BSP_LCD_DisplayStringAt(0,170,(uint8_t*) "I didnt see", CENTER_MODE);
+	BSP_LCD_DisplayStringAt(0,220,(uint8_t*) str, CENTER_MODE);
+  }
+  else{
+	BSP_LCD_Clear(LCD_COLOR_LIGHTGREEN);
+	BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+	BSP_LCD_SetFont(&Font20);
+	BSP_LCD_DisplayStringAt(0,128,(uint8_t*) "YES! I Could see", CENTER_MODE);
+	BSP_LCD_DisplayStringAt(0,180,(uint8_t*) str, CENTER_MODE);
+  }
+
+
 }
 
 void Draw_Random_Page(const char* str){
@@ -365,8 +389,8 @@ int main(void)
 	  		  is_main_menu = false;
 	  		  time_t t;
 	  		  srand((unsigned) HAL_GetTick());
-	  		  int random_n = rand() % 100;
-	  		  Draw_Random_Page(dict[random_n]);
+	  		  current_doodle = rand() % 100;
+	  		  Draw_Random_Page(dict[current_doodle]);
 	  		  is_random_page = true;
 	  	  }
 	  	  else if((screen_state.X > DRAW_IMGAE_X1 && screen_state.X < DRAW_IMGAE_X2) && (screen_state.Y > DRAW_IMGAE_Y1 && screen_state.Y < DRAW_IMGAE_Y2 ) && is_game_page){
@@ -382,7 +406,7 @@ int main(void)
 //		  		  BSP_LCD_DrawPixel(y + LCD_INPUT_IMAGE_SHIFT, LCD_INPUT_IMAGE_HEIGHT+x-1,255);
 //		  		  BSP_LCD_DrawPixel(y + 1 + LCD_INPUT_IMAGE_SHIFT,LCD_INPUT_IMAGE_HEIGHT+x-1,255);
 //		  		  BSP_LCD_DrawPixel(y - 1 + LCD_INPUT_IMAGE_SHIFT,LCD_INPUT_IMAGE_HEIGHT+x+1,255);
-		  		  BSP_LCD_FillCircle(screen_state.X, screen_state.Y, 3);
+		  		  BSP_LCD_FillCircle(screen_state.X, screen_state.Y, 4);
 	  		  }
 	  		  else if ((screen_state.X > CLEAR_BUTTON_X1 && screen_state.X < CLEAR_BUTTON_X2) && (screen_state.Y > CLEAR_BUTTON_Y1 && screen_state.Y < CLEAR_BUTTON_Y2 ) ){
 	  			Draw_Menu();
@@ -391,7 +415,6 @@ int main(void)
 
 	  		  }
 
-
 	  	  }
 	  	  if(is_score_page){
 	  		HAL_Delay(100);
@@ -399,15 +422,35 @@ int main(void)
 		    size_t N = sizeof(out_data) / sizeof(*out_data);
 		    size_t *indices = order_int(out_data, N);
 		    //for (size_t i = 0; i < N; i++) printf("%f \n\r", out_data[indices[i]]);
-			sprintf(first_guess_str ,"%s , %s", dict[indices[0]] , dict[indices[1]]);
-			sprintf(second_guess_str,"%s , %s , %s", dict[indices[2]] , dict[indices[3]],dict[indices[4]]);
+			sprintf(first_guess_str ,"%s , %s,  %s", dict[indices[0]] , dict[indices[1]],dict[indices[2]] );
+			sprintf(second_guess_str,"%s , %s , %s", dict[indices[3]] , dict[indices[4]],dict[indices[5]]);
 			BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
 			BSP_LCD_SetFont(&Font12);
 			BSP_LCD_DisplayStringAt(10,270,(uint8_t*) first_guess_str, LEFT_MODE);
 			BSP_LCD_DisplayStringAt(10,280,(uint8_t*) second_guess_str, LEFT_MODE);
-		    free(indices);
+		    HAL_Delay(3000);
+		    bool true_guess = false;
 			Reset_Pred(&in_data,&first_guess,&second_guess);
 			is_score_page = false;
+			for(uint8_t i = 0; i < MAX_CLASS_CONSIDER; ++i ){
+				if(indices[i] == current_doodle){
+					Draw_Results_Page(true,dict[current_doodle]);
+					true_guess = true;
+					break;
+				}
+			}
+			if(!true_guess){
+				Draw_Results_Page(false,dict[current_doodle]);
+			}
+			free(indices);
+			HAL_Delay(3000);
+		    counter = GAME_RANDOM_TIME;
+		    is_main_menu = false;
+		    is_random_page = true;
+		    time_t t;
+		    srand((unsigned) HAL_GetTick());
+		    current_doodle = rand() % 100;
+		    Draw_Random_Page(dict[current_doodle]);
 	  	  }
 
 
